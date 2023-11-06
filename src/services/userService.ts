@@ -1,49 +1,49 @@
 import bcrypt from "bcrypt";
-import { Pool } from "pg";
-import { SupabaseClient, createClient } from "@supabase/supabase-js";
+import { createClient } from "@supabase/supabase-js";
 
 const supabaseUrl = "https://jubrjaocdbwatuwrzrbt.supabase.co";
-const supabaseKey: any = process.env.SUPABASE_KEY;
-const supabase = createClient(supabaseUrl, supabaseKey) as SupabaseClient;
+const supabaseKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1YnJqYW9jZGJ3YXR1d3J6cmJ0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE2OTg4NDQ3MTIsImV4cCI6MjAxNDQyMDcxMn0.3xGAseJOfdjyBJ1dgxq_bpwuLj-njwGOvijJ59MH6yY";
 
 class User {
   constructor(public email: string, public password: string) {}
 }
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-});
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export class UserService {
-  static async registerUser(email: string, password: string): Promise<boolean> {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const client = await pool.connect();
+  static async registerUser(email: string, password: string): Promise<any> {
     try {
-      await client.query("BEGIN");
-      const insertUserQuery =
-        "INSERT INTO users (email, password) VALUES ($1, $2)";
-      await client.query(insertUserQuery, [email, hashedPassword]);
-      await client.query("COMMIT");
-      return true;
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      if (error) {
+        return { error: error.message };
+      }
+      return data.user;
     } catch (error) {
-      await client.query("ROLLBACK");
-      throw error;
-    } finally {
-      client.release();
+      return console.error(error);
     }
   }
 
-  static async findUserByEmail(email: string): Promise<User | undefined> {
-    const query = "SELECT * FROM users WHERE email = $1";
-    const result = await pool.query(query, [email]);
-    if (result.rows.length === 0) {
-      return undefined;
-    }
-    const { email: foundEmail, password } = result.rows[0];
-    return new User(foundEmail, password);
-  }
+  static async findUserByEmail(email: string): Promise<any> {
+    try {
+      const { data, error } = await supabase
+        .from("users")
+        .select()
+        .eq("email", email);
 
+      if (error) {
+        return { error: error.message };
+      }
+      console.log(data);
+      return data;
+    } catch (error) {
+      console.error(error);
+      return { error: "User not found" };
+    }
+  }
   static async comparePasswords(
     password: string,
     hashedPassword: string
