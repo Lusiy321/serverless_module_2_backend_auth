@@ -1,5 +1,6 @@
 import bcrypt from "bcrypt";
 import { createClient } from "@supabase/supabase-js";
+import { v4 as uuidv4 } from "uuid";
 
 const supabaseUrl = "https://jubrjaocdbwatuwrzrbt.supabase.co";
 const supabaseKey =
@@ -14,14 +15,25 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 export class UserService {
   static async registerUser(email: string, password: string): Promise<any> {
     try {
-      const { data, error } = await supabase.auth.signUp({
+      const id = uuidv4();
+      const { error } = await supabase.from("users").insert({
+        id,
         email,
         password,
       });
       if (error) {
         return { error: error.message };
       }
-      return data.user;
+      if (!error) {
+        const { data, error } = await supabase
+          .from("users")
+          .select()
+          .eq("email", email);
+        if (error) {
+          return { error: error.message };
+        }
+        return data;
+      }
     } catch (error) {
       return console.error(error);
     }
@@ -37,7 +49,6 @@ export class UserService {
       if (error) {
         return { error: error.message };
       }
-      console.log(data);
       return data;
     } catch (error) {
       console.error(error);

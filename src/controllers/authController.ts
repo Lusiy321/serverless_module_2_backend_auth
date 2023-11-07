@@ -9,7 +9,7 @@ const SECRET_KEY = `${process.env.JWT_SECRET}`;
 class AuthController {
   static async signUp(req: express.Request, res: express.Response) {
     const { email, password } = req.body;
-    console.log(email);
+
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({ errors: errors.array() });
@@ -17,19 +17,19 @@ class AuthController {
 
     try {
       const userExists = await UserService.findUserByEmail(email);
-      if (userExists.email === email) {
-        return res
-          .status(400)
-          .json({ message: "User with this email already exists" });
+
+      if (Array.isArray(userExists) && userExists.length === 0) {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const user = await UserService.registerUser(email, hashedPassword);
+        return res.status(201).json({ success: true, data: user[0] });
       }
-      const hashedPassword = await bcrypt.hash(password, 10);
-      const user = await UserService.registerUser(email, hashedPassword);
-      return res
-        .status(201)
-        .json({ message: "User registered successfully", data: user });
+      if (userExists[0].email === email) {
+        return res.status(409).json({ success: false, error: "User exist" });
+      }
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Registration failed" });
+      return res
+        .status(500)
+        .json({ message: "Registration failed", data: error });
     }
   }
 
@@ -37,7 +37,7 @@ class AuthController {
     const { email, password } = req.body;
 
     const user = await UserService.findUserByEmail(email);
-    console.log(user);
+
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
