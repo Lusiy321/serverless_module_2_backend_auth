@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { UserService } from "../services/userService";
+require("dotenv").config();
 
 export const SECRET_KEY = `${process.env.JWT_SECRET}`;
 export const TOKEN_TTL = `${process.env.ACCESS_TOKEN_TTL}m`;
@@ -66,7 +67,14 @@ class AuthController {
       expiresIn: TOKEN_TTL,
     });
 
-    res.json({ message: "Authentication successful", token });
+    res.json({
+      success: true,
+      data: {
+        id: user[0].id,
+        accessToken: user[0].accessToken,
+        refreshToken: user[0].refreshToken,
+      },
+    });
   }
 
   static async me(req: express.Request, res: express.Response) {
