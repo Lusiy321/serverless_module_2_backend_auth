@@ -2,7 +2,6 @@ import express from "express";
 import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { UserService } from "../services/userService";
-require("dotenv").config();
 
 export const SECRET_KEY = `${process.env.JWT_SECRET}`;
 export const TOKEN_TTL = `${process.env.ACCESS_TOKEN_TTL}m`;

@@ -1,7 +1,6 @@
 import bcrypt from "bcrypt";
 import { createClient } from "@supabase/supabase-js";
 import { v4 as uuidv4 } from "uuid";
-require("dotenv").config();
 
 const supabaseUrl = `${process.env.DATABASE_URL}`;
 const supabaseKey = `${process.env.SUPABASE_KEY}`;
